@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  eventforge-backend:
+    build:
+      context: ../  # Adjusts the directory context to the parent directory, where Dockerfile is located.
+      dockerfile: Dockerfile  # Explicitly specify the Dockerfile name if necessary
+    ports:
+      - "8181:8181"
+    environment:
+      SPRING_DATASOURCE_URL: "${DATA_SOURCE}"
+      SPRING_DATASOURCE_USERNAME: "${DB_USERNAME}"
+      SPRING_DATASOURCE_PASSWORD: "${DB_PASSWORD}"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      ADMIN_USERNAME: "${ADMIN_USERNAME}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_EXPIRATION_TIME: "${JWT_EXPIRATION_TIME}"
+      SPRING_MAIL_USERNAME: "${SPRING_MAIL_USERNAME}"
+      SPRING_MAIL_PASSWORD: "${SPRING_MAIL_PASSWORD}"
+      WEBHOOK_URL: "${WEBHOOK_URL}"
+      PORT: "${PORT}"
+    env_file:
+      - .env
+    depends_on:
+      - mysqldb
+    networks:
+      - eventforge-api
+    restart: unless-stopped
+
+  mysqldb:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: eventforge
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - eventforge-api
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  eventforge-api:
