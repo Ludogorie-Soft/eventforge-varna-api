@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventforge-api
+  labels:
+    app: eventforge-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventforge-api
+  template:
+    metadata:
+      labels:
+        app: eventforge-api
+    spec:
+      containers:
+        - name: eventforge-api
+          image: ekadiyski/kubernetes-eventforge-api:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8181
+          resources:
+            limits:
+              cpu: 0.2
+              memory: "200Mi"
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: mysql-user-password
+            - name: DATA_SOURCE
+              valueFrom:
+                configMapKeyRef:
+                  name:  mysql-config-map
+                  key: spring-datasource-url
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name:  mysql-config-map
+                  key: mysql-database-name
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: mysql-user-username
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: admin-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: jwt-secret
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: spring-mail-password
+            - name: ADMIN_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: admin-username
+            - name: JWT_EXPIRATION_TIME
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: jwt-expiration-time
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: sb-port
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: spring-mail-username
+            - name: WEBHOOK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mysql-config-map
+                  key: webhook-url
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventforge-api
+  labels:
+    app: eventforge-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: eventforge-api
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8181
+      targetPort: 8181
+      nodePort: 30000
